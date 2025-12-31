@@ -7,7 +7,7 @@ def _split_csv(s: str) -> List[str]:
     return [x.strip() for x in (s or "").split(",") if x.strip()]
 
 
-class NodeSettingsToText:
+class SettingsToText:
     """
     Outputs a STRING built from the currently executing prompt (graph),
     so you can feed node settings into any text input during the same run.
@@ -89,10 +89,7 @@ class NodeSettingsToText:
         for nid, nd in base.items():
             if nd.get("class_type") in ("CheckpointLoaderSimple", "CheckpointLoader"):
                 ckpt = (nd.get("inputs") or {}).get("ckpt_name")
-                if ckpt:
-                    lines.append(f"checkpoint: {ckpt}")
-                else:
-                    lines.append("checkpoint: <missing ckpt_name>")
+                lines.append(f"checkpoint: {ckpt}" if ckpt else "checkpoint: <missing ckpt_name>")
                 break
 
         # diffusion model / UNet (Load Diffusion Model)
@@ -104,21 +101,22 @@ class NodeSettingsToText:
                 unet_name = inp.get("unet_name") or inp.get("model_name") or inp.get("name")
                 weight_dtype = inp.get("weight_dtype")
                 if unet_name and weight_dtype is not None:
-                    lines.append(f"diffusion_model[{nid}]: {unet_name} (dtype={weight_dtype})")
+                    lines.append(f"diffusion_model: {unet_name} (dtype={weight_dtype})")
                 elif unet_name:
-                    lines.append(f"diffusion_model[{nid}]: {unet_name}")
+                    lines.append(f"diffusion_model: {unet_name}")
                 else:
-                    lines.append(f"diffusion_model[{nid}]: <missing unet_name>")
+                    lines.append(f"diffusion_model: <missing unet_name>")
+
         # AuraFlow sampling (ModelSamplingAuraFlow)
         # Typical inputs: model (link), shift (float)
         for nid, nd in base.items():
             if nd.get("class_type") == "ModelSamplingAuraFlow":
                 inp = nd.get("inputs") or {}
                 shift = inp.get("shift")
-                if shift is not None:
-                    lines.append(f"auraflow_sampling[{nid}]: shift={shift}")
-                else:
-                    lines.append(f"auraflow_sampling[{nid}]: shift=<missing>")
+                lines.append(
+                    f"auraflow_sampling: shift={shift}" if shift is not None
+                    else f"auraflow_sampling: shift=<missing>"
+                )
 
         # LoRAs (all)
         for nid, nd in base.items():
@@ -128,16 +126,16 @@ class NodeSettingsToText:
                 sm = inp.get("strength_model")
                 sc = inp.get("strength_clip", sm)
                 if name:
-                    lines.append(f"lora[{nid}]: {name} (model={sm}, clip={sc})")
+                    lines.append(f"lora: {name} (model={sm}, clip={sc})")
                 else:
-                    lines.append(f"lora[{nid}]: <missing lora_name>")
+                    lines.append(f"lora: <missing lora_name>")
 
         # Sampler (first KSampler)
         for nid, nd in base.items():
             if nd.get("class_type") == "KSampler":
                 inp = nd.get("inputs") or {}
                 lines.append(
-                    "sampler[{nid}]: {sampler}/{scheduler}, steps={steps}, cfg={cfg}, denoise={denoise}, seed={seed}".format(
+                    "sampler: {sampler}/{scheduler}, steps={steps}, cfg={cfg}, denoise={denoise}, seed={seed}".format(
                         nid=nid,
                         sampler=inp.get("sampler_name"),
                         scheduler=inp.get("scheduler"),
@@ -156,7 +154,7 @@ class NodeSettingsToText:
                 w = inp.get("width")
                 h = inp.get("height")
                 b = inp.get("batch_size")
-                lines.append(f"size[{nid}]: {w}x{h}, batch={b}")
+                lines.append(f"size: {w}x{h}, batch={b}")
                 break
 
         if not lines:
@@ -165,10 +163,12 @@ class NodeSettingsToText:
         return ("\n".join(lines),)
 
 
+# Internal node id -> class
 NODE_CLASS_MAPPINGS = {
-    "NodeSettingsToText": NodeSettingsToText,
+    "SettingsToText": SettingsToText,
 }
 
+# What you see in the ComfyUI node menu
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "NodeSettingsToText": "Node settings → text (runtime)",
+    "SettingsToText": "Settings to text",
 }
