@@ -1,4 +1,6 @@
 # ComfyUI-SettingsToText
 shitty ai-written node to extract basic settings in workflow
+does not play well with subgraphed nodes
 
-<img width="1052" height="389" alt="{8728CA5B-0DB4-4681-AF45-FDCF26EB035F}" src="https://github.com/user-attachments/assets/60f84ca7-2d6a-4a55-9d23-1b1a8cee5921" />
+<img width="1465" height="888" alt="obrazek" src="https://github.com/user-attachments/assets/d9bdaa24-cd0c-4e7e-9b0f-7ffbf5255469" />
+
